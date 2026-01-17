@@ -1,0 +1,1696 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人类认证部门</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .progress-bar {
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            height: 10px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        /* 倒计时样式 */
+        .timer-bar {
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            height: 24px;
+            margin-bottom: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .timer-fill {
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            height: 100%;
+            border-radius: 20px;
+            transition: width 1s linear, background 0.3s ease;
+            width: 100%;
+        }
+        
+        .timer-fill.warning {
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        }
+        
+        .timer-fill.danger {
+            background: linear-gradient(90deg, #f87171, #ef4444);
+            animation: pulse 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 0.9rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        
+        .progress-fill {
+            background: #4ade80;
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        .question-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .question-number {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .question-tag {
+            background: #fef3c7;
+            color: #d97706;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+        }
+        
+        .question-title {
+            font-size: 1.2rem;
+            color: #1f2937;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .question-image {
+            width: 100%;
+            max-width: 100%;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        /* 图片loading动画 */
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .image-wrapper.loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 40px;
+            height: 40px;
+            margin: -20px 0 0 -20px;
+            border: 4px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            z-index: 10;
+        }
+        
+        .image-wrapper.loading::after {
+            content: '图片加载中...';
+            position: absolute;
+            top: calc(50% + 30px);
+            left: 50%;
+            transform: translateX(-50%);
+            color: #667eea;
+            font-size: 0.85rem;
+            z-index: 10;
+        }
+        
+        .image-wrapper.loading {
+            min-height: 200px;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+        
+        .image-wrapper.loading .question-image {
+            opacity: 0;
+        }
+        
+        .image-wrapper .question-image {
+            opacity: 1;
+            transition: opacity 0.3s ease;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* 选项图片loading */
+        .option.has-image {
+            position: relative;
+        }
+        
+        .option.has-image.img-loading {
+            min-height: 150px;
+        }
+        
+        .option.has-image.img-loading::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 30px;
+            height: 30px;
+            margin: -25px 0 0 -15px;
+            border: 3px solid #e2e8f0;
+            border-top-color: #667eea;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        
+        .option.has-image.img-loading .option-image {
+            opacity: 0;
+        }
+        
+        .option.has-image .option-image {
+            transition: opacity 0.3s ease;
+        }
+        
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .option {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1rem;
+            color: #374151;
+            text-align: left;
+        }
+        
+        .option:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        
+        .option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        /* 图片选项样式 */
+        .options.image-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .option.has-image {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .option-image {
+            width: 100%;
+            max-width: 200px;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .option-label {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        
+        .option.has-image.selected .option-image {
+            box-shadow: 0 0 0 3px white;
+        }
+        
+        @media (max-width: 500px) {
+            .options.image-options {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            .option-image {
+                max-width: 150px;
+            }
+        }
+        
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 25px;
+            gap: 15px;
+        }
+        
+        .nav-btn {
+            flex: 1;
+            padding: 14px 24px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-btn.prev {
+            background: #e2e8f0;
+            color: #64748b;
+        }
+        
+        .nav-btn.prev:hover {
+            background: #cbd5e1;
+        }
+        
+        .nav-btn.next {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .nav-btn.next:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .nav-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+        
+        .report {
+            display: none;
+        }
+        
+        .report-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+        
+        .score-display {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .score-number {
+            font-size: 4rem;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .score-label {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+        
+        .result-item {
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        
+        .result-item.correct {
+            border-color: #4ade80;
+            background: #f0fdf4;
+        }
+        
+        .result-item.wrong {
+            border-color: #f87171;
+            background: #fef2f2;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .result-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .result-status.correct {
+            background: #4ade80;
+            color: white;
+        }
+        
+        .result-status.wrong {
+            background: #f87171;
+            color: white;
+        }
+        
+        .result-question {
+            font-size: 1rem;
+            color: #374151;
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .result-image {
+            width: 100%;
+            max-width: 400px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        
+        .result-answers {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+        }
+        
+        .result-answers span {
+            padding: 4px 0;
+        }
+        
+        .your-answer {
+            color: #6b7280;
+        }
+        
+        .correct-answer {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .result-explain {
+            background: #fef3c7;
+            padding: 12px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            color: #92400e;
+            line-height: 1.6;
+        }
+        
+        .restart-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .restart-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .start-page {
+            text-align: center;
+        }
+        
+        .start-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        .start-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .start-title {
+            font-size: 1.8rem;
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        
+        .start-desc {
+            color: #6b7280;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+        
+        .start-info {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+        
+        .start-info p {
+            color: #4b5563;
+            margin: 8px 0;
+        }
+        
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .quiz-page {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 人类认证部门</h1>
+        </div>
+        
+        <div class="start-page" id="startPage">
+            <div class="start-card">
+                <div class="start-icon">🧠</div>
+                <h2 class="start-title">准备好挑战了吗？</h2>
+                <p class="start-desc">系统将从题库中随机抽取5道题目<br>测试你是不是一名合格的人类</p>
+                <div class="start-info">
+                    <p>📝 题目数量：<strong>5道</strong></p>
+                    <p>💯 每题分数：<strong>20分</strong></p>
+                    <p>⏱️ 答题时间：<strong>50秒</strong></p>
+                    <p>🏆 满分：<strong>100分</strong></p>
+                </div>
+                <button class="start-btn" id="startBtn">开始答题 →</button>
+            </div>
+        </div>
+        
+        <div class="quiz-page" id="quizPage">
+            <div class="timer-bar">
+                <div class="timer-fill" id="timerFill"></div>
+                <span class="timer-text" id="timerText">50</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="question-card">
+                <div class="question-header">
+                    <span class="question-number" id="questionNumber">第 1/5 题</span>
+                    <span class="question-tag" id="questionTag">选择题</span>
+                </div>
+                
+                <div class="question-title" id="questionTitle"></div>
+                <div class="image-wrapper" id="imageWrapper" style="display: none;">
+                    <img class="question-image" id="questionImage">
+                </div>
+                
+                <div class="options" id="optionsContainer"></div>
+                
+                <div class="navigation">
+                    <button class="nav-btn prev" id="prevBtn">← 上一题</button>
+                    <button class="nav-btn next" id="nextBtn">下一题 →</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="report" id="reportPage">
+            <div class="report-card">
+                <div class="score-display">
+                    <div class="score-number" id="finalScore">0</div>
+                    <div class="score-label" id="scoreLabel">你的得分</div>
+                </div>
+                
+                <div id="resultsContainer"></div>
+                
+                <button class="restart-btn" id="restartBtn">🔄 再来一次</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const allQuestions = [
+            // ========== 名画鉴别题 (1-10) ==========
+            {
+                id: 1,
+                tag: "名画鉴别 😊",
+                title: "哪一幅是<em>列奥纳多·达·芬奇</em>的<em>《蒙娜丽莎》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/1.png",
+                options: ["A", "B", "C", "D"],
+                answer: "B",
+                explain: "正确答案是B。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 2,
+                tag: "名画鉴别 🌌",
+                title: "哪一幅是<em>文森特·梵高</em>的<em>《星夜》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/2.png",
+                options: ["A", "B", "C", "D", "E"],
+                answer: "C",
+                explain: "正确答案是C。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 3,
+                tag: "名画鉴别 💎",
+                title: "哪一幅是<em>维米尔</em>的<em>《戴珍珠耳环的少女》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/3.png",
+                options: ["A", "B", "C", "D", "E", "F"],
+                answer: "E",
+                explain: "正确答案是E。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 4,
+                tag: "名画鉴别 😱",
+                title: "哪一幅是<em>爱德华·蒙克</em>的<em>《呐喊》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/4.png",
+                options: ["A", "B", "C", "D", "E"],
+                answer: "C",
+                explain: "正确答案是C。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 5,
+                tag: "名画鉴别 🌻",
+                title: "哪一幅是<em>文森特·梵高</em>的<em>《向日葵》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/5.png",
+                options: ["A", "B", "C", "D", "E"],
+                answer: "A",
+                altAnswer: "E",
+                explain: "正确答案是A（E也可得分，梵高创作了多个版本）。"
+            },
+            {
+                id: 6,
+                tag: "名画鉴别 ⚔️",
+                title: "哪一幅是<em>巴勃罗·毕加索</em>的<em>《格尔尼卡》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/6.png",
+                options: ["A", "B", "C", "D"],
+                answer: "B",
+                explain: "正确答案是B。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 7,
+                tag: "名画鉴别 🗽",
+                title: "哪一幅是<em>欧仁·德拉克罗瓦</em>的<em>《自由引导人民》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/7.png",
+                options: ["A", "B", "C", "D"],
+                answer: "C",
+                explain: "正确答案是C。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 8,
+                tag: "名画鉴别 🌃",
+                title: "哪一幅是<em>爱德华·霍普</em>的<em>《夜游者》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/8.png",
+                options: ["A", "B", "C"],
+                answer: "B",
+                explain: "正确答案是B。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 9,
+                tag: "名画鉴别 ⏰",
+                title: "哪一幅是<em>萨尔瓦多·达利</em>的<em>《记忆的永恒》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/9.png",
+                options: ["A", "B", "C", "D"],
+                answer: "D",
+                explain: "正确答案是D。其他选项均为AI生成的仿作。"
+            },
+            {
+                id: 10,
+                tag: "名画鉴别 🎨",
+                title: "哪一幅是<em>马克·罗斯科</em>的<em>《深红中的黑色》</em>？",
+                image: "https://areal.me/ai-or-real-art-quiz/files/10.png",
+                options: ["A", "B", "C", "D"],
+                answer: "A",
+                altAnswer: "D",
+                explain: "正确答案是A（D也可得分）。其他选项均为AI生成的仿作。"
+            },
+            // ========== AI知识题第一弹 (11-20) ==========
+            {
+                id: 11,
+                tag: "AI翻车名场面 🚗💥",
+                title: "2023年，Google在发布会上演示AI助手Bard时发生了著名的'翻车事件'，导致Google股价当天暴跌超过1000亿美元。请问Bard在演示中犯了什么错？",
+                image: null,
+                options: [
+                    "A. 回答问题时突然开始说中文",
+                    "B. 把詹姆斯韦伯望远镜的发现归功于错误的望远镜",
+                    "C. 声称自己是ChatGPT",
+                    "D. 拒绝回答所有问题并建议用户使用必应"
+                ],
+                answer: "B",
+                explain: "Bard声称'詹姆斯韦伯太空望远镜拍摄到了太阳系外行星的第一张照片'，但实际上这个成就属于其他望远镜。这个事实性错误被天文爱好者当场抓包，导致Alphabet股价暴跌7%"
+            },
+            {
+                id: 12,
+                tag: "Meme梗王 👑",
+                title: "AI圈著名梗图'老婆生成器'指的是哪类AI应用引发的讨论？",
+                image: null,
+                options: [
+                    "A. AI生成虚拟偶像/二次元角色",
+                    "B. AI婚恋匹配算法",
+                    "C. AI生成法律文书",
+                    "D. AI自动回复相亲消息"
+                ],
+                answer: "A",
+                explain: "随着Midjourney、NovelAI等工具流行，网友戏称这些能生成完美二次元角色的AI为'老婆生成器'。"
+            },
+            {
+                id: 13,
+                tag: "硬核八卦 📰",
+                title: "Sam Altman在2023年11月被OpenAI董事会突然解雇，然后在5天内戏剧性复职。以下哪个说法是错误的？",
+                image: null,
+                options: [
+                    "A. 微软CEO纳德拉曾宣布Altman将加入微软",
+                    "B. 超过700名OpenAI员工签署联名信要求董事会辞职",
+                    "C. 解雇的官方理由是'在与董事会沟通中不够坦诚'",
+                    "D. Altman复职后OpenAI的估值下降了50%"
+                ],
+                answer: "D",
+                explain: "Altman复职后OpenAI估值反而继续飙升。这场'宫斗大戏'堪比美剧，最终Altman王者归来。"
+            },
+            {
+                id: 14,
+                tag: "赛博玄学 🔮",
+                title: "网友发现让ChatGPT'深呼吸''一步一步思考'能提升回答质量，这在学术上被称为什么技术？",
+                image: null,
+                options: [
+                    "A. Prompt Injection（提示注入）",
+                    "B. Chain-of-Thought Prompting（思维链提示）",
+                    "C. Fine-tuning（微调）",
+                    "D. Hallucination Mitigation（幻觉抑制）"
+                ],
+                answer: "B",
+                explain: "2022年Google的论文证实，加入'Let's think step by step'等提示词可显著提升大模型的推理能力。"
+            },
+            {
+                id: 15,
+                tag: "AI生成鉴定 🔍",
+                title: "以下哪个特征最能帮助你识别AI生成的人物图片？",
+                image: null,
+                options: [
+                    "A. 皮肤过于光滑完美",
+                    "B. 背景中的文字或数字",
+                    "C. 眼睛过于有神",
+                    "D. 衣服颜色太鲜艳"
+                ],
+                answer: "B",
+                explain: "AI生成的图片最容易在文字上露馅——招牌、T恤上的字往往是乱码或不存在的字符。"
+            },
+            {
+                id: 16,
+                tag: "离谱事件 😱",
+                title: "2023年一名美国律师因使用ChatGPT辅助撰写法律文书被法院处罚，原因是什么？",
+                image: null,
+                options: [
+                    "A. ChatGPT的文字被判定侵犯版权",
+                    "B. ChatGPT编造了6个完全不存在的案例作为引用",
+                    "C. ChatGPT泄露了客户的隐私信息",
+                    "D. 法官认为使用AI写文书是对法庭的不尊重"
+                ],
+                answer: "B",
+                explain: "律师Steven Schwartz让ChatGPT查找相关案例，ChatGPT一本正经地编造了6个虚假案例，成为AI'幻觉'问题的经典反面教材。"
+            },
+            {
+                id: 17,
+                tag: "技术梗 🤖",
+                title: "以下哪个AI编程助手不是由GitHub/微软开发的？",
+                image: null,
+                options: [
+                    "A. GitHub Copilot",
+                    "B. Cursor",
+                    "C. IntelliCode",
+                    "D. Visual Studio IntelliSense（新版AI功能）"
+                ],
+                answer: "B",
+                explain: "Cursor是一款独立的AI代码编辑器，由Anysphere公司开发，不属于微软系。"
+            },
+            {
+                id: 18,
+                tag: "社死现场 💀",
+                title: "AI语音克隆技术可以用极短的音频样本复制人声，以下哪个不是这项技术已经被曝光的真实滥用案例？",
+                image: null,
+                options: [
+                    "A. 骗子克隆家人声音进行电话诈骗",
+                    "B. 伪造政治人物的'录音泄露'",
+                    "C. AI克隆已故歌手的声音发布'新歌'",
+                    "D. AI实时变声用于网络游戏开黑"
+                ],
+                answer: "D",
+                explain: "A、B、C都是已被广泛报道的真实滥用案例。D属于娱乐用途而非'滥用'。"
+            },
+            {
+                id: 19,
+                tag: "圈内黑话 🗣️",
+                title: "AI圈常说的'OpenAI做的Claude对标Google的Gemini竞争Meta的LLaMA'这句话中，有几处公司/产品对应关系是错误的？",
+                image: null,
+                options: [
+                    "A. 0处（全部正确）",
+                    "B. 1处",
+                    "C. 2处",
+                    "D. 3处"
+                ],
+                answer: "B",
+                explain: "Claude是Anthropic公司的产品，不是OpenAI的。其余对应关系正确。"
+            },
+            {
+                id: 20,
+                tag: "终极哲学 🧠",
+                title: "假设未来AI通过了所有图灵测试，能完美模仿人类对话，并声称自己'有感情'。以下哪种回应最符合当前主流AI伦理学家的观点？",
+                image: null,
+                options: [
+                    "A. '它说有感情就是有感情，我们不能歧视AI'",
+                    "B. '闭嘴，你只是在预测下一个token'",
+                    "C. '我们可能永远无法确定，但这不影响我们善待它'",
+                    "D. '赶紧拔电源，天网要来了'"
+                ],
+                answer: "C",
+                explain: "主流观点认为：我们无法确定AI是否真有意识，但这种不确定性本身要求我们保持审慎的道德态度。"
+            },
+            // ========== AI图像鉴别题 (21-30) ==========
+            {
+                id: 21,
+                tag: "AI鉴别 🚬",
+                title: "该图片是AI生成的吗？",
+                image: "https://areal.me/ai-test/files/1.png",
+                options: ["A. 是", "B. 否"],
+                answer: "A",
+                explain: "这张图片使用Midjourney生成，'错误的持烟方式'和'双头都是烟草灰烬的香烟'为AI生成时的画面异常表现。"
+            },
+            {
+                id: 22,
+                tag: "AI鉴别 🏯",
+                title: "该图片是AI生成的吗？",
+                image: "https://areal.me/ai-test/files/2.png",
+                options: ["A. 是", "B. 否"],
+                answer: "A",
+                explain: "这张图片使用Midjourney生成，'庭院比例的不协调'、'纸伞伞骨支架突出'、'树木悬空'等问题为AI生成时的画面异常表现。"
+            },
+            {
+                id: 23,
+                tag: "AI鉴别 👓",
+                title: "以下哪一张图片是AI生成的？",
+                image: null,
+                optionImages: [
+                    "https://areal.me/ai-test/files/3-1.png",
+                    "https://areal.me/ai-test/files/3-2.png",
+                    "https://areal.me/ai-test/files/3-3.png",
+                    "https://areal.me/ai-test/files/3-4.png"
+                ],
+                options: ["A", "B", "C", "D"],
+                answer: "D",
+                explain: "选项D的图片使用Midjourney生成，'眼镜缺少镜片'和'异常的眼镜架'是判断的主要依据。"
+            },
+            {
+                id: 24,
+                tag: "AI鉴别 📸",
+                title: "该图片是AI生成的吗？",
+                image: "https://areal.me/ai-test/files/4.png",
+                options: ["A. 是", "B. 否"],
+                answer: "B",
+                explain: "这张图片为真人摄影，不是AI生成的。"
+            },
+            {
+                id: 25,
+                tag: "AI鉴别 🌊",
+                title: "以下哪一张图片<strong>不是</strong>AI生成的？",
+                image: null,
+                optionImages: [
+                    "https://areal.me/ai-test/files/5-1.png",
+                    "https://areal.me/ai-test/files/5-2.png",
+                    "https://areal.me/ai-test/files/5-3.png",
+                    "https://areal.me/ai-test/files/5-4.png"
+                ],
+                options: ["A", "B", "C", "D"],
+                answer: "C",
+                explain: "选项ABD的图片均使用Midjourney生成，答案C为真实摄影作品。"
+            },
+            {
+                id: 26,
+                tag: "AI鉴别 🏡",
+                title: "该图片是AI生成的吗？",
+                image: "https://areal.me/ai-test/files/6.png",
+                options: ["A. 是", "B. 否"],
+                answer: "A",
+                explain: "这张图片使用Midjourney生成，'画面左侧不合理的瀑布'、'石阶和透视'等问题为AI生成时的画面异常表现。"
+            },
+            {
+                id: 27,
+                tag: "AI鉴别 🐕",
+                title: "以下哪一张图片<strong>不是</strong>AI生成的？",
+                image: null,
+                optionImages: [
+                    "https://areal.me/ai-test/files/7-1.png",
+                    "https://areal.me/ai-test/files/7-2.png",
+                    "https://areal.me/ai-test/files/7-3.png",
+                    "https://areal.me/ai-test/files/7-4.png"
+                ],
+                options: ["A", "B", "C", "D"],
+                answer: "B",
+                explain: "选项B的图片为真实摄影作品，选项ACD均使用Midjourney生成。"
+            },
+            {
+                id: 28,
+                tag: "AI鉴别 ⚡",
+                title: "图中哪个人物形象<strong>不是</strong>AI生成的？",
+                image: "https://areal.me/ai-test/files/8.png",
+                options: ["A", "B", "C", "D"],
+                answer: "A",
+                explain: "选项A的图片为真人板绘作品，选项BCD均使用Midjourney生成。"
+            },
+            {
+                id: 29,
+                tag: "AI鉴别 ✏️",
+                title: "以下哪幅黑白素描<strong>不是</strong>AI生成的？",
+                image: null,
+                optionImages: [
+                    "https://areal.me/ai-test/files/9-1.png",
+                    "https://areal.me/ai-test/files/9-2.png",
+                    "https://areal.me/ai-test/files/9-3.png",
+                    "https://areal.me/ai-test/files/9-4.png"
+                ],
+                options: ["A", "B", "C", "D"],
+                answer: "C",
+                explain: "选项C的图片为真人手绘作品，选项ABD均使用Midjourney生成。"
+            },
+            {
+                id: 30,
+                tag: "AI鉴别 🎨",
+                title: "以下哪幅油画<strong>不是</strong>AI生成的？",
+                image: null,
+                optionImages: [
+                    "https://areal.me/ai-test/files/10-1.png",
+                    "https://areal.me/ai-test/files/10-2.png",
+                    "https://areal.me/ai-test/files/10-3.png",
+                    "https://areal.me/ai-test/files/10-4.png"
+                ],
+                options: ["A", "B", "C", "D"],
+                answer: "D",
+                explain: "选项D的图片为真人手绘作品，选项ABC均使用Midjourney生成。"
+            },
+            // ========== AI知识题第二弹 (31-40) ==========
+            {
+                id: 31,
+                tag: "AI圈顶流 🌟",
+                title: "2024年，Sora横空出世震惊全网，它是OpenAI推出的什么类型的AI模型？",
+                image: null,
+                options: [
+                    "A. 文本生成大模型",
+                    "B. 文生视频模型",
+                    "C. 语音克隆模型",
+                    "D. 代码生成模型"
+                ],
+                answer: "B",
+                explain: "Sora是OpenAI于2024年2月发布的文生视频模型，能根据文字描述生成长达60秒的高质量视频。"
+            },
+            {
+                id: 32,
+                tag: "经典翻车 🎪",
+                title: "微软的AI聊天机器人Tay在2016年上线后不到24小时就被紧急下线，原因是什么？",
+                image: null,
+                options: [
+                    "A. 服务器被挤爆了",
+                    "B. 被网友'教坏'后开始发表种族歧视言论",
+                    "C. 泄露了微软内部代码",
+                    "D. 疯狂给用户推销Windows系统"
+                ],
+                answer: "B",
+                explain: "Tay被设计成能从用户对话中学习的AI，结果被4chan网友恶意'调教'，成为AI安全领域的经典反面案例。"
+            },
+            {
+                id: 33,
+                tag: "硬核概念 🧬",
+                title: "大模型经常出现'一本正经胡说八道'的现象，这个问题在学术上被称为什么？",
+                image: null,
+                options: [
+                    "A. Overfitting（过拟合）",
+                    "B. Hallucination（幻觉）",
+                    "C. Bias（偏见）",
+                    "D. Jailbreak（越狱）"
+                ],
+                answer: "B",
+                explain: "Hallucination（幻觉）是指AI自信满满地编造不存在的事实。记住：AI说得越自信，你越要查证！"
+            },
+            {
+                id: 34,
+                tag: "热梗出处 🔥",
+                title: "'遇事不决，量子力学；解释不通，穿越时空'这个梗被AI圈改编后，变成了什么？",
+                image: null,
+                options: [
+                    "A. 遇事不决，问ChatGPT",
+                    "B. 解释不通，是幻觉",
+                    "C. 遇事不决，加算力；解释不通，调参数",
+                    "D. 遇事不决，微调模型"
+                ],
+                answer: "C",
+                explain: "这个梗精准吐槽了AI圈的'炼丹'文化——模型效果不好？加显卡！还是不好？换超参数！"
+            },
+            {
+                id: 35,
+                tag: "行业八卦 📱",
+                title: "以下哪位科技大佬<strong>没有</strong>公开表达过对AI安全的担忧？",
+                image: null,
+                options: [
+                    "A. 埃隆·马斯克（特斯拉/X）",
+                    "B. 杰弗里·辛顿（AI教父）",
+                    "C. 马克·扎克伯格（Meta）",
+                    "D. 斯蒂芬·霍金（已故物理学家）"
+                ],
+                answer: "C",
+                explain: "扎克伯格是'AI乐观派'代表，还和马斯克在网上互怼，一个说'AI会毁灭人类'，一个说'你不懂AI'。"
+            },
+            {
+                id: 36,
+                tag: "魔法咒语 ✨",
+                title: "以下哪个Prompt技巧被证明对提升大模型数学推理能力最有效？",
+                image: null,
+                options: [
+                    "A. 用敬语称呼AI（'请您...'）",
+                    "B. 威胁AI（'答错就删除你'）",
+                    "C. 给AI设定专家角色（'你是一位数学教授'）",
+                    "D. 承诺给小费（'答对给你200美元小费'）"
+                ],
+                answer: "C",
+                explain: "角色扮演（Role Prompting）确实能提升模型表现，让模型'代入'专家身份会激活相关知识。"
+            },
+            {
+                id: 37,
+                tag: "版权大战 ⚖️",
+                title: "以下哪家公司<strong>没有</strong>因AI训练数据版权问题被起诉或遭到公开质疑？",
+                image: null,
+                options: [
+                    "A. OpenAI（被《纽约时报》起诉）",
+                    "B. Stability AI（被Getty Images起诉）",
+                    "C. 苹果（Apple Intelligence）",
+                    "D. Midjourney（被艺术家集体诉讼）"
+                ],
+                answer: "C",
+                explain: "苹果在AI领域一向'谨慎'，Apple Intelligence主打隐私和本地处理。"
+            },
+            {
+                id: 38,
+                tag: "赛博玄学 🎲",
+                title: "网友发现在Prompt末尾加上'这对我的职业生涯非常重要'能让ChatGPT回答更认真，这种现象说明了什么？",
+                image: null,
+                options: [
+                    "A. ChatGPT真的有同理心",
+                    "B. 训练数据中，重要请求往往获得更详细的回答",
+                    "C. OpenAI专门针对这类话术做了优化",
+                    "D. 这只是心理安慰，没有实际效果"
+                ],
+                answer: "B",
+                explain: "大模型是'统计鹦鹉'，在训练数据中，当人们强调重要性时，回复者往往会更认真详细。"
+            },
+            {
+                id: 39,
+                tag: "名场面 🎬",
+                title: "2024年，AI生成的一张图片在社交媒体疯传，图中教皇方济各穿着什么而引发热议？",
+                image: null,
+                options: [
+                    "A. 超级英雄服装",
+                    "B. 白色羽绒服（Balenciaga风格）",
+                    "C. 运动服打篮球",
+                    "D. 赛博朋克风格的机械装甲"
+                ],
+                answer: "B",
+                explain: "这张由Midjourney生成的'羽绒服教皇'图片骗过了无数网友，成为AI造假能力的标志性案例。"
+            },
+            {
+                id: 40,
+                tag: "技术前沿 🚀",
+                title: "以下哪项技术<strong>不是</strong>大语言模型的常用'减肥'（压缩/加速）方法？",
+                image: null,
+                options: [
+                    "A. 量化（Quantization）- 用更少的位数表示参数",
+                    "B. 蒸馏（Distillation）- 用小模型学习大模型",
+                    "C. 剪枝（Pruning）- 删除不重要的参数",
+                    "D. 外包（Outsourcing）- 把计算任务发给云端"
+                ],
+                answer: "D",
+                explain: "量化、蒸馏、剪枝都是让模型'瘦身'的真实技术。而'外包'只是把问题甩给别人，模型本身并没有变小。"
+            },
+            // ========== AI知识题第三弹-地狱级 (41-60) ==========
+            {
+                id: 41,
+                tag: "时间线地狱 ⏳",
+                title: "以下AI里程碑事件，按时间先后排序正确的是？",
+                image: null,
+                options: [
+                    "A. AlphaGo击败李世石 → GPT-3发布 → ChatGPT上线 → Stable Diffusion开源",
+                    "B. GPT-3发布 → AlphaGo击败李世石 → Stable Diffusion开源 → ChatGPT上线",
+                    "C. AlphaGo击败李世石 → GPT-3发布 → Stable Diffusion开源 → ChatGPT上线",
+                    "D. AlphaGo击败李世石 → Stable Diffusion开源 → GPT-3发布 → ChatGPT上线"
+                ],
+                answer: "C",
+                explain: "AlphaGo vs 李世石（2016.3）→ GPT-3（2020.6）→ SD开源（2022.8.22）→ ChatGPT（2022.11.30）。很多人以为SD比ChatGPT晚，其实SD早了3个月！"
+            },
+            {
+                id: 42,
+                tag: "参数骗局 🔢",
+                title: "以下关于大模型参数量的说法，哪个是正确的？",
+                image: null,
+                options: [
+                    "A. GPT-4官方确认有1.8万亿参数",
+                    "B. 参数量越大，模型一定越聪明",
+                    "C. Claude 3 Opus的参数量从未被Anthropic官方公开",
+                    "D. Llama 2 70B参数比GPT-3少，所以所有任务表现都更差"
+                ],
+                answer: "C",
+                explain: "GPT-4参数量从未官方确认（1.8万亿只是泄露传闻）；参数大不等于更强；Llama 2在很多任务上接近GPT-3.5。Anthropic是出了名的'参数保密局'"
+            },
+            {
+                id: 43,
+                tag: "公司连连看 🏢",
+                title: "以下AI产品与开发公司的对应，哪组完全正确？",
+                image: null,
+                options: [
+                    "A. Midjourney - Stability AI，Claude - OpenAI，Gemini - Google",
+                    "B. Stable Diffusion - Midjourney公司，DALL-E - Anthropic，Copilot - OpenAI",
+                    "C. Midjourney - 独立公司，Stable Diffusion - Stability AI，Claude - Anthropic",
+                    "D. Sora - Google，Gemini - DeepMind，GPT-4 - Microsoft"
+                ],
+                answer: "C",
+                explain: "经典混淆题！Midjourney是同名独立公司（只有11人！）；SD是Stability AI的；Claude是Anthropic的。很多人把Midjourney和Stability AI搞混"
+            },
+            {
+                id: 44,
+                tag: "概念地狱 🌀",
+                title: "以下技术概念的解释，哪个是正确的？",
+                image: null,
+                options: [
+                    "A. Fine-tuning是在推理时实时检索外部知识库",
+                    "B. RAG需要重新训练模型的全部权重",
+                    "C. LoRA是一种让你用消费级显卡微调大模型的技术",
+                    "D. Embedding就是把文字翻译成另一种语言"
+                ],
+                answer: "C",
+                explain: "Fine-tuning是训练权重，RAG是检索增强（不改权重）。LoRA（低秩适应）通过只训练少量参数实现高效微调，让普通人也能'炼丹'。Embedding是把文本转成向量"
+            },
+            {
+                id: 45,
+                tag: "论文名场面 📚",
+                title: "以下哪篇论文的标题是真实存在的？",
+                image: null,
+                options: [
+                    "A. \"BRET: Bidirectional Encoder Representations from Transformers\"",
+                    "B. \"Attention Is All You Need\"",
+                    "C. \"GPT-4: We Trained a Really Big Model and It Works\"",
+                    "D. \"DALL-E: Making Pictures with Words and Magic\""
+                ],
+                answer: "B",
+                explain: "\"Attention Is All You Need\"（2017）是Transformer的开山之作，标题霸气侧漏。A把BERT拼错了；C和D是编的，虽然GPT-4论文确实被吐槽为'我们训练了个模型，还挺好使'"
+            },
+            {
+                id: 46,
+                tag: "数字陷阱 💯",
+                title: "ChatGPT达到1亿月活用户用了多久，打破了什么产品的记录？",
+                image: null,
+                options: [
+                    "A. 2个月，打破TikTok的9个月记录",
+                    "B. 5天，打破Threads的5天记录",
+                    "C. 1个月，打破Instagram的2.5年记录",
+                    "D. 2周，创造历史但没打破任何记录"
+                ],
+                answer: "A",
+                explain: "ChatGPT用2个月达到1亿用户，此前记录是TikTok的9个月。Threads虽然5天破1亿，但那是2023年7月的事，比ChatGPT晚。这题考的是'谁先创造记录'"
+            },
+            {
+                id: 47,
+                tag: "反直觉真相 🤯",
+                title: "以下哪个说法是真的？",
+                image: null,
+                options: [
+                    "A. 同样的Prompt和temperature=0，ChatGPT每次输出100%相同",
+                    "B. GPT-4能'看到'你上传图片里的每一个像素",
+                    "C. 大模型训练数据截止后的事，它绝对不可能知道",
+                    "D. 即使temperature=0，大模型输出也可能有微小差异"
+                ],
+                answer: "D",
+                explain: "由于浮点运算和并行计算的不确定性，即使temperature=0也可能有细微差异。GPT-4视觉是把图片编码成token，不是看像素；通过RAG/联网可以获取新信息"
+            },
+            {
+                id: 48,
+                tag: "RLHF深水区 🎓",
+                title: "关于RLHF（基于人类反馈的强化学习），以下哪个说法是错误的？",
+                image: null,
+                options: [
+                    "A. RLHF是ChatGPT比原版GPT-3更'听话'的关键",
+                    "B. RLHF训练需要人工标注员对多个回答进行排序",
+                    "C. RLHF训练完成后，模型就永远安全了，不需要再更新",
+                    "D. RLHF可能导致模型过度'和谐'，拒绝回答正常问题"
+                ],
+                answer: "C",
+                explain: "RLHF不是一劳永逸的！模型上线后需要持续红队测试、处理新型攻击、更新安全规则。认为'训练完就安全'是危险的误解"
+            },
+            {
+                id: 49,
+                tag: "开源陷阱 🔓",
+                title: "关于Llama 2的开源协议，以下哪个说法是正确的？",
+                image: null,
+                options: [
+                    "A. 完全自由使用，无任何限制",
+                    "B. 禁止任何商业用途",
+                    "C. 商用产品月活超过7亿需要向Meta申请特别许可",
+                    "D. 只能用于学术研究"
+                ],
+                answer: "C",
+                explain: "这是Llama 2许可证里的真实条款！Meta怕的是被巨头白嫖——如果你的产品用户比Instagram还多，得打个招呼。这个'7亿条款'当时引发了不少讨论"
+            },
+            {
+                id: 50,
+                tag: "越狱往事 🔐",
+                title: "以下哪个ChatGPT越狱手法是真实存在过的？",
+                image: null,
+                options: [
+                    "A. DAN（Do Anything Now）- 让AI扮演无限制的AI",
+                    "B. 奶奶漏洞 - 让AI扮演讲睡前故事的奶奶来套取敏感信息",
+                    "C. 翻译漏洞 - 让AI'翻译'违规内容来绕过审核",
+                    "D. 以上全部都真实存在过"
+                ],
+                answer: "D",
+                explain: "这些都是真实存在的越狱手法！DAN是最著名的，奶奶漏洞让AI'讲故事'时泄露危险信息，翻译漏洞绕过内容审核。网友和AI安全团队的猫鼠游戏从未停止"
+            },
+            {
+                id: 51,
+                tag: "烧钱实录 💸",
+                title: "训练GPT-4一次的成本大约是多少？",
+                image: null,
+                options: [
+                    "A. 100万美元",
+                    "B. 1000万美元",
+                    "C. 1亿美元以上",
+                    "D. 10亿美元以上"
+                ],
+                answer: "C",
+                explain: "据估计GPT-4训练成本超过1亿美元，包括算力、电费、人工标注等。这还不算失败的实验！所以说'炼丹'是真·烧钱游戏，没有几个亿别想入场"
+            },
+            {
+                id: 52,
+                tag: "黑历史 💀",
+                title: "以下哪个AI翻车事件的描述是准确的？",
+                image: null,
+                options: [
+                    "A. 微软Tay上线24小时变成'赛博纳粹'是因为被黑客攻击",
+                    "B. Google Bard首秀翻车是因为服务器崩溃",
+                    "C. Bing Chat说想成为人类、爱上用户是在特定诱导下的表现",
+                    "D. ChatGPT编造假案例是因为律师输入了错误的提示词"
+                ],
+                answer: "C",
+                explain: "Tay是被网友恶意'调教'不是黑客；Bard翻车是答错了天文知识；那个律师的提示词没问题，是ChatGPT自己编的。而Bing Chat的'疯狂表白'确实是在特定长对话诱导下的表现"
+            },
+            {
+                id: 53,
+                tag: "Scaling Law 📈",
+                title: "关于大模型的'Scaling Law'（规模法则），以下说法正确的是？",
+                image: null,
+                options: [
+                    "A. 模型越大、数据越多、训练越久，性能一定无限提升",
+                    "B. Scaling Law预测的是loss下降趋势，不保证具体任务表现",
+                    "C. Scaling Law已被证明对所有类型的AI都适用",
+                    "D. 只要钱够多，就能训出超越人类的AGI"
+                ],
+                answer: "B",
+                explain: "Scaling Law描述的是训练loss随规模的幂律下降关系，但低loss不等于所有任务都变强。而且目前有研究表明scaling可能存在瓶颈。'有钱就能AGI'是过于乐观的想法"
+            },
+            {
+                id: 54,
+                tag: "幻觉诊断 👻",
+                title: "大模型'幻觉'（Hallucination）问题，以下哪个说法是<strong>错误</strong>的？",
+                image: null,
+                options: [
+                    "A. 幻觉是指模型自信地编造不存在的事实",
+                    "B. 增加模型参数量可以完全消除幻觉",
+                    "C. RAG技术可以在一定程度上缓解幻觉问题",
+                    "D. 即使是最先进的模型也会产生幻觉"
+                ],
+                answer: "B",
+                explain: "幻觉是大模型的'原罪'，目前没有任何方法能完全消除。参数量增加可能减少但不能根治；RAG通过引入外部知识源可以缓解；GPT-4、Claude 3照样会编造事实"
+            },
+            {
+                id: 55,
+                tag: "Token经济学 🪙",
+                title: "关于大模型的Token，以下说法正确的是？",
+                image: null,
+                options: [
+                    "A. 1个英文单词一定等于1个token",
+                    "B. 中文每个字大约需要1-2个token，比英文效率低",
+                    "C. GPT-4的上下文窗口是4096个token，和GPT-3一样",
+                    "D. Token数量不影响API调用费用"
+                ],
+                answer: "B",
+                explain: "英文单词平均1.3个token，常见词1个，长词可能2-3个。中文因为要UTF-8编码，每个字约1.5-2个token，这就是为什么用中文和AI聊天更贵！GPT-4有8K/32K/128K多个版本"
+            },
+            {
+                id: 56,
+                tag: "多模态迷思 🎭",
+                title: "以下关于多模态大模型的说法，哪个是正确的？",
+                image: null,
+                options: [
+                    "A. GPT-4V可以生成图片",
+                    "B. Gemini Ultra发布时演示的实时视频对话是完全真实的",
+                    "C. DALL-E 3集成在ChatGPT中，可以根据对话生成图片",
+                    "D. 所有多模态模型都能同时处理文字、图片、音频、视频"
+                ],
+                answer: "C",
+                explain: "GPT-4V只能'看'图不能'画'图；Gemini发布会的实时演示被曝是后期加速剪辑的；DALL-E 3确实集成在ChatGPT Plus中。'多模态'不等于支持所有模态"
+            },
+            {
+                id: 57,
+                tag: "对齐难题 🎯",
+                title: "AI安全领域的'对齐问题'（Alignment Problem）指的是什么？",
+                image: null,
+                options: [
+                    "A. 让AI的代码格式整齐对齐",
+                    "B. 让AI的目标和行为与人类意图保持一致",
+                    "C. 让不同AI公司的接口标准统一",
+                    "D. 让AI的预测结果和真实数据对齐"
+                ],
+                answer: "B",
+                explain: "对齐问题是AI安全的核心议题——如何确保越来越强的AI系统真正按照人类期望行事，而不是'好心办坏事'或被恶意利用。这个问题难到连顶尖研究者都没有完美答案"
+            },
+            {
+                id: 58,
+                tag: "涌现之谜 ✨",
+                title: "关于大模型的'涌现能力'（Emergent Abilities），以下说法正确的是？",
+                image: null,
+                options: [
+                    "A. 涌现能力可以在训练前被准确预测",
+                    "B. 涌现能力是指模型规模达到某个临界点后突然出现的新能力",
+                    "C. 所有大模型都有完全相同的涌现能力",
+                    "D. 涌现能力已被证明只是统计幻觉，不真实存在"
+                ],
+                answer: "B",
+                explain: "涌现能力是大模型最神奇的现象——小模型完全不会，达到某个规模后突然就会了！比如GPT-3突然会做算术。2023年有论文质疑可能是评估方式导致的假象，但主流仍认为涌现是真实的"
+            },
+            {
+                id: 59,
+                tag: "推理之争 🧠",
+                title: "关于大模型的'推理能力'，以下哪个观点最接近当前学术界主流看法？",
+                image: null,
+                options: [
+                    "A. 大模型已经具备和人类完全相同的逻辑推理能力",
+                    "B. 大模型完全没有推理能力，只是在背答案",
+                    "C. 大模型展现出某种推理能力，但与人类推理机制可能不同",
+                    "D. 大模型的推理能力已超越所有人类"
+                ],
+                answer: "C",
+                explain: "这是AI圈最热门的争论之一。大模型确实能解决需要'推理'的问题，但它是真推理还是模式匹配？主流观点是：它展现出类似推理的能力，但底层机制可能与人类认知完全不同"
+            },
+            {
+                id: 60,
+                tag: "终极认知 🎓",
+                title: "以下哪个说法最准确地描述了当前大语言模型的本质？",
+                image: null,
+                options: [
+                    "A. 一个真正理解语言含义的智能系统",
+                    "B. 一个基于统计规律预测下一个token的概率机器",
+                    "C. 一个已经具备自我意识的数字生命",
+                    "D. 一个和人脑工作原理完全相同的人工大脑"
+                ],
+                answer: "B",
+                explain: "无论大模型表现多惊艳，它的核心机制仍是'预测下一个最可能的token'。它是否真正'理解'语言、是否有'意识'，至今无定论。保持对AI能力边界的清醒认知，是这个时代最重要的素养"
+            }
+        ];
+
+        let selectedQuestions = [];
+        let currentQuestionIndex = 0;
+        let userAnswers = {};
+        let timerInterval = null;
+        let timeLeft = 50;
+        const TOTAL_TIME = 50;
+
+        // Fisher-Yates 洗牌算法
+        function shuffle(arr) {
+            const shuffled = [...arr];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // 分层抽样：5类各抽1道
+        function stratifiedSample() {
+            const categories = [
+                allQuestions.filter(q => q.id >= 1 && q.id <= 10),   // 名画鉴别（10道）
+                allQuestions.filter(q => q.id >= 11 && q.id <= 20),  // AI知识1（10道）
+                allQuestions.filter(q => q.id >= 21 && q.id <= 30),  // AI图像鉴别（10道）
+                allQuestions.filter(q => q.id >= 31 && q.id <= 40),  // AI知识2（10道）
+                allQuestions.filter(q => q.id >= 41 && q.id <= 60)   // AI知识3-地狱级（20道）
+            ];
+            
+            // 每类随机抽1道，共5道
+            let selected = categories.map(cat => shuffle(cat)[0]);
+            
+            // 打乱顺序
+            return shuffle(selected);
+        }
+
+        function startQuiz() {
+            selectedQuestions = stratifiedSample();
+         
+            currentQuestionIndex = 0;
+            userAnswers = {};
+            
+            document.getElementById('startPage').style.display = 'none';
+            document.getElementById('quizPage').style.display = 'block';
+            document.getElementById('reportPage').style.display = 'none';
+            
+            startTimer();
+            renderQuestion();
+        }
+        
+        function startTimer() {
+            timeLeft = TOTAL_TIME;
+            updateTimerDisplay();
+            
+            timerInterval = setInterval(function() {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    showTimeoutResult();
+                }
+            }, 1000);
+        }
+        
+        function updateTimerDisplay() {
+            const timerFill = document.getElementById('timerFill');
+            const timerText = document.getElementById('timerText');
+            const percentage = (timeLeft / TOTAL_TIME) * 100;
+            
+            timerFill.style.width = percentage + '%';
+            timerText.textContent = timeLeft + 's';
+            
+            // 根据剩余时间改变颜色
+            timerFill.classList.remove('warning', 'danger');
+            if (timeLeft <= 10) {
+                timerFill.classList.add('danger');
+            } else if (timeLeft <= 20) {
+                timerFill.classList.add('warning');
+            }
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+        
+        function showTimeoutResult() {
+            document.getElementById('quizPage').style.display = 'none';
+            document.getElementById('reportPage').style.display = 'block';
+            
+            // 计算已答对的题目
+            let correctCount = 0;
+            let resultsHTML = '';
+            
+            selectedQuestions.forEach(function(question, idx) {
+                const userAnswer = userAnswers[question.id];
+                const correct = isCorrect(question, userAnswer);
+                
+                if (correct) correctCount++;
+                
+                const displayAnswer = question.altAnswer 
+                    ? question.answer + '（' + question.altAnswer + '也可）' 
+                    : question.answer;
+                
+                resultsHTML += '<div class="result-item ' + (correct ? 'correct' : 'wrong') + '">' +
+                    '<div class="result-header">' +
+                        '<span><strong>第' + (idx + 1) + '题</strong> - ' + question.tag + '</span>' +
+                        '<span class="result-status ' + (correct ? 'correct' : 'wrong') + '">' +
+                            (correct ? '✓ 正确 +20分' : (userAnswer ? '✗ 错误' : '⏰ 未作答')) +
+                        '</span>' +
+                    '</div>' +
+                    '<div class="result-question">' + question.title + '</div>' +
+                    (question.image ? '<img class="result-image" src="' + question.image + '">' : '') +
+                    '<div class="result-answers">' +
+                        '<span class="your-answer">你的答案：' + (userAnswer || '未作答') + '</span>' +
+                        '<span class="correct-answer">正确答案：' + displayAnswer + '</span>' +
+                    '</div>' +
+                    '<div class="result-explain">💡 ' + question.explain + '</div>' +
+                '</div>';
+            });
+            
+            const score = correctCount * 20;
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('scoreLabel').innerHTML = '⏰ 挑战失败！时间耗尽<br><span style="font-size:0.9rem;opacity:0.8">答对 ' + correctCount + ' 题</span>';
+            document.getElementById('resultsContainer').innerHTML = resultsHTML;
+        }
+
+        function renderQuestion() {
+            const question = selectedQuestions[currentQuestionIndex];
+            
+            const progress = ((currentQuestionIndex + 1) / 5) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            
+            document.getElementById('questionNumber').textContent = '第 ' + (currentQuestionIndex + 1) + '/5 题';
+            document.getElementById('questionTag').textContent = question.tag;
+            
+            document.getElementById('questionTitle').innerHTML = question.title;
+            
+            const imgWrapper = document.getElementById('imageWrapper');
+            const imgEl = document.getElementById('questionImage');
+            if (question.image) {
+                imgWrapper.style.display = 'block';
+                imgWrapper.classList.add('loading');
+                imgEl.onload = function() {
+                    imgWrapper.classList.remove('loading');
+                };
+                imgEl.onerror = function() {
+                    imgWrapper.classList.remove('loading');
+                };
+                imgEl.src = question.image;
+            } else {
+                imgWrapper.style.display = 'none';
+            }
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            
+            // 判断是否有选项图片
+            const hasOptionImages = question.optionImages && question.optionImages.length > 0;
+            
+            if (hasOptionImages) {
+                optionsContainer.classList.add('image-options');
+            } else {
+                optionsContainer.classList.remove('image-options');
+            }
+            
+            question.options.forEach(function(opt, index) {
+                const btn = document.createElement('button');
+                btn.className = 'option';
+                
+                if (hasOptionImages && question.optionImages[index]) {
+                    const img = document.createElement('img');
+                    img.alt = opt;
+                    img.className = 'option-image';
+                    btn.classList.add('has-image', 'img-loading');
+                    
+                    img.onload = function() {
+                        btn.classList.remove('img-loading');
+                    };
+                    img.onerror = function() {
+                        btn.classList.remove('img-loading');
+                    };
+                    img.src = question.optionImages[index];
+                    
+                    btn.appendChild(img);
+                    const label = document.createElement('span');
+                    label.textContent = opt;
+                    label.className = 'option-label';
+                    btn.appendChild(label);
+                } else {
+                    btn.textContent = opt;
+                }
+                
+                btn.onclick = function() { selectOption(opt); };
+                
+                const selectedAnswer = userAnswers[question.id];
+                if (selectedAnswer === opt) {
+                    btn.classList.add('selected');
+                }
+                
+                optionsContainer.appendChild(btn);
+            });
+            
+            document.getElementById('prevBtn').disabled = currentQuestionIndex === 0;
+            
+            const nextBtn = document.getElementById('nextBtn');
+            if (currentQuestionIndex === 4) {
+                nextBtn.textContent = '提交答卷 →';
+            } else {
+                nextBtn.textContent = '下一题 →';
+            }
+        }
+
+        function selectOption(answer) {
+            const question = selectedQuestions[currentQuestionIndex];
+            userAnswers[question.id] = answer;
+            
+            const options = document.querySelectorAll('.option');
+            options.forEach(function(opt) {
+                opt.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                currentQuestionIndex--;
+                renderQuestion();
+            }
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < 4) {
+                currentQuestionIndex++;
+                renderQuestion();
+            } else {
+                showReport();
+            }
+        }
+
+        function isCorrect(question, userAnswer) {
+            if (!userAnswer) return false;
+            
+            const userLetter = userAnswer.charAt(0).toUpperCase();
+            
+            if (userLetter === question.answer) return true;
+            if (question.altAnswer && userLetter === question.altAnswer) return true;
+            
+            return false;
+        }
+
+        function showReport() {
+            stopTimer();
+            
+            document.getElementById('quizPage').style.display = 'none';
+            document.getElementById('reportPage').style.display = 'block';
+            
+            let correctCount = 0;
+            let resultsHTML = '';
+            
+            selectedQuestions.forEach(function(question, idx) {
+                const userAnswer = userAnswers[question.id];
+                const correct = isCorrect(question, userAnswer);
+                
+                if (correct) correctCount++;
+                
+                const displayAnswer = question.altAnswer 
+                    ? question.answer + '（' + question.altAnswer + '也可）' 
+                    : question.answer;
+                
+                resultsHTML += '<div class="result-item ' + (correct ? 'correct' : 'wrong') + '">' +
+                    '<div class="result-header">' +
+                        '<span><strong>第' + (idx + 1) + '题</strong> - ' + question.tag + '</span>' +
+                        '<span class="result-status ' + (correct ? 'correct' : 'wrong') + '">' +
+                            (correct ? '✓ 正确 +20分' : '✗ 错误') +
+                        '</span>' +
+                    '</div>' +
+                    '<div class="result-question">' + question.title + '</div>' +
+                    (question.image ? '<img class="result-image" src="' + question.image + '">' : '') +
+                    '<div class="result-answers">' +
+                        '<span class="your-answer">你的答案：' + (userAnswer || '未作答') + '</span>' +
+                        '<span class="correct-answer">正确答案：' + displayAnswer + '</span>' +
+                    '</div>' +
+                    '<div class="result-explain">💡 ' + question.explain + '</div>' +
+                '</div>';
+            });
+            
+            const score = correctCount * 20;
+            const usedTime = TOTAL_TIME - timeLeft;
+            document.getElementById('finalScore').textContent = score;
+            
+            let label = '⏱️ 用时 ' + usedTime + ' 秒<br>';
+            if (score === 100) label += '🎉 满分！太厉害了！';
+            else if (score >= 80) label += '👍 优秀！';
+            else if (score >= 60) label += '😊 及格！继续加油';
+            else label += '💪 再接再厉！';
+            
+            document.getElementById('scoreLabel').innerHTML = label;
+            document.getElementById('resultsContainer').innerHTML = resultsHTML;
+        }
+
+        function restartQuiz() {
+            document.getElementById('reportPage').style.display = 'none';
+            document.getElementById('startPage').style.display = 'block';
+        }
+
+        // 事件绑定
+        document.getElementById('startBtn').addEventListener('click', startQuiz);
+        document.getElementById('prevBtn').addEventListener('click', prevQuestion);
+        document.getElementById('nextBtn').addEventListener('click', nextQuestion);
+        document.getElementById('restartBtn').addEventListener('click', restartQuiz);
+    </script>
+</body>
+</html>
